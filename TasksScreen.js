@@ -1,10 +1,8 @@
 import React from 'react';
 
-import { View, Text, Image, FlatList, TouchableOpacity, Button, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, Image, FlatList, TouchableOpacity, TouchableHighlight, Button, ActivityIndicator, StyleSheet, Modal } from 'react-native';
 
-import { CompleteTask, GetTasks } from './fetch';
-
-import Dialog, { DialogContent } from 'react-native-popup-dialog';
+import { CompleteTask, GetTasks, GetSingle } from './fetch';
 
 export default class TasksScreen extends React.Component {
     static navigationOptions =
@@ -14,7 +12,7 @@ export default class TasksScreen extends React.Component {
                 title: 'Tasks     ',
                 headerStyle: {
                     backgroundColor: '#0B486B',
-                },  
+                },
                 headerTintColor: '#fff',
                 headerTitleStyle: {
                     fontWeight: 'bold',
@@ -39,8 +37,14 @@ export default class TasksScreen extends React.Component {
         this.state = {
             data: this.props.navigation.state.params.data,
             loading: false,
-            visible: false
+            visible: true,
+
+            modalVisible: false,
         };
+    }
+
+    toggleModal(visible) {
+        this.setState({ modalVisible: visible });
     }
 
     componentDidMount() {
@@ -49,20 +53,21 @@ export default class TasksScreen extends React.Component {
 
     completeTask(id) {
         this.setState({ loading: true });
-        CompleteTask(id).then(data => {
-            GetTasks().then(data => {
-                this.setState({ data: data })
-                this.setState({ loading: false });
+        GetSingle(id).then(content => {
+            CompleteTask(id, content).then(data => {
+                GetTasks().then(data => this.setState({ data: data, loading: false }));
             });
         });
     }
 
     openTask(taskID) {
-        this.setState({ visible: true });
+        this.setState({ modalVisible: true });
     }
 
+
     reload() {
-        GetTasks().then(data => this.setState({ data: data }));
+        this.setState({ loading: true });
+        GetTasks().then(data => this.setState({ data: data, loading: false }));
     }
 
     render() {
@@ -76,8 +81,7 @@ export default class TasksScreen extends React.Component {
                                 <View style={{ alignSelf: 'flex-start', flex: 4, flexDirection: 'column' }}>
                                     <TouchableOpacity
                                         onPress={() => this.openTask("yo")}
-                                        underlayColor="#0094c1"
-                                    >
+                                        underlayColor="#0094c1">
                                         <Text style={{ fontSize: 14, fontWeight: '500', overflow: 'visible', flexWrap: 'wrap' }}> {item.INFO} </Text>
                                         <View style={{ flexDirection: 'row' }}>
                                             <View style={{ backgroundColor: item.WARNINGLEVEL }}>
@@ -95,11 +99,29 @@ export default class TasksScreen extends React.Component {
                                     </TouchableOpacity>
                                 </View>
                             </View>
-                        )}
-                    >
+                        )}>
                     </FlatList>
                 )
             }
+            // else if(this.state.modalVisible){
+            //     return (
+            //                     <Modal animationType={"slide"} transparent={false}
+            //                         visible={this.state.modelVisible}
+            //                         onRequestClose={() => { console.log("Modal has been closed.") }}>
+
+            //                         <View style={styles.modal}>
+            //                             <Text style={styles.text}>Modal is open!</Text>
+
+            //                             <TouchableHighlight onPress={() => {
+            //                                 this.toggleModal(!this.state.modalVisible)
+            //                             }}>
+
+            //                                 <Text style={styles.text}>Close Modal</Text>
+            //                             </TouchableHighlight>
+            //                         </View>
+            //                     </Modal>
+            //     )
+            // } 
             else {
                 return (
                     <View style={styles.container}>
